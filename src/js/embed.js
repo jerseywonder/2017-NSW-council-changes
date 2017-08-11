@@ -10,9 +10,15 @@ window.init = function init(el, config) {
     iframeMessenger.enableAutoResize();
 
     el.innerHTML = embedHTML;
-    var zoomOn = null;
 
-    var currentSelection = "average_household_size";
+    var zoomOn = null;
+    var scaleFactor = 5;
+
+    console.log("scaleFactor: " + scaleFactor)
+
+    // if (isAndroidApp) {
+    //     d3.select("#variableNote").text("Census data")
+    // }
 
     function numberFormat(num) {
         if ( num > 0 ) {
@@ -30,36 +36,15 @@ window.init = function init(el, config) {
         return num;
     }
 
-    function getParameter(paramName) {
-        var searchString = window.location.search.substring(1),
-        i, val, params = searchString.split("&");
 
-        for (i=0;i<params.length;i++) {
-        val = params[i].split("=");
-        if (val[0] == paramName) {
-        return val[1];
-        }
-        }
-        return null;
-    }   
+    function makeMap(lga,elected) {
 
-
-    function makeMap(sa2s,places,selection) {
-
-    if (selection) {
-        currentSelection = selection
-        console.log(currentSelection)
-        d3.select("#statChooser").property('value', currentSelection);
-    }
-    
-    
+    // console.log(sa2s,places) 
 
     var statusMessage = d3.select("#statusMessage");
 
     var width = document.querySelector("#mapContainer").getBoundingClientRect().width
     var height = width * 0.6
-    
-
     if (width < 500) {
         height = width * 0.8;
     }
@@ -67,8 +52,8 @@ window.init = function init(el, config) {
     var active = d3.select(null);
     var scaleFactor = 1;
     var projection = d3.geoMercator()
-                    .center([135,-28.0])
-                    .scale(width*0.85)
+                    .center([148,-33])
+                    .scale(width*3)
                     .translate([width/2,height/2])
 
     var path = d3.geoPath()
@@ -90,6 +75,7 @@ window.init = function init(el, config) {
                     .attr("id", "map")
                     .attr("overflow", "hidden")
                     .on("mousemove", tooltipMove)
+                    .call(zoom)
                     .on('onTouchStart', function(currentSwiper, e) {
                         if (isAndroidApp && window.GuardianJSInterface.registerRelatedCardsTouch) {
                             window.GuardianJSInterface.registerRelatedCardsTouch(true);
@@ -101,9 +87,41 @@ window.init = function init(el, config) {
                         }
                     });
 
+
+    var defs = svg.append("defs")
+
+    var defs1 = defs.append("pattern")
+          .attr("id", "hash4_4")
+          .attr("class", "ding")
+          .attr("width", 3)
+          .attr("height", 3)
+          .attr("patternUnits", "userSpaceOnUse")
+          .append("image")
+            .attr("class", "ding dong")
+            .attr("xlink:href", "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSd3aGl0ZScvPgogIDxwYXRoIGQ9J00tMSwxIGwyLC0yCiAgICAgICAgICAgTTAsMTAgbDEwLC0xMAogICAgICAgICAgIE05LDExIGwyLC0yJyBzdHJva2U9J2JsYWNrJyBzdHJva2Utd2lkdGg9JzEnLz4KPC9zdmc+Cg==")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", 3)
+            .attr("height", 3)
+
+    var defs2 = defs.append("pattern")
+          .attr("id", "circle_pattern")
+          .attr("class", "ding")
+          .attr("width", 3)
+          .attr("height", 3)
+          .attr("patternUnits", "userSpaceOnUse")
+          .append("image")
+          .attr("class", "ding dong")
+            .attr("xlink:href", "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSd3aGl0ZScgLz4KICA8Y2lyY2xlIGN4PScxLjUnIGN5PScxLjUnIHI9JzEuNScgZmlsbD0nYmxhY2snLz4KPC9zdmc+Cg==")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", 3)
+            .attr("height", 3)
+
     if (zoomOn == true | zoomOn == null) {
         svg.call(zoom)
-    }                
+    }  
+
 
     var tooltip = d3.select("#mapContainer")
         .append("div")
@@ -114,41 +132,119 @@ window.init = function init(el, config) {
         .style("top", "30px")
         .style("left", "55px");                 
 
-    var features = svg.append("g")
+    var features = svg.append("g").attr("id", "mappy")
+
+    var partyColour = ["#aad8f1","#94b1ca","#d61d00","#4a7801","#fdadba"];
+
+    var electorateData = (topojson.feature(elected, elected.objects.electoratemerge)).features;
 
     features.append("path")
                 .datum(graticule)
                 .attr("class", "graticule")
+                .attr("class", "graticule")
                 .attr("d", path);                       
+
+
+    features.append("g")
+        .selectAll(".path")
+        .data(electorateData, function(d) { return d['properties']['Name']; })
+        .enter().append("path")
+        .attr("d", path)
+        .style("opacity", 1)
+        .style("fill", function(d) { 
+
+            if (d['properties']['margins_pa'] == 'LAB') {
+                return partyColour[2];
+            }
+
+            else if (d['properties']['margins_pa'] == 'LIB') {
+                return partyColour[0];
+
+            }
+
+            else if (d['properties']['margins_pa'] == 'NAT') {
+                return partyColour[1];
+
+            }
+
+            else if (d['properties']['margins_pa'] == 'GRN') {
+                return partyColour[3];
+            }
+
+            else if (d['properties']['margins_pa'] == 'IND') {
+                return partyColour[4];
+            }
+             
+
+        })
+
+    
+
+    var lgaData = (topojson.feature(lga, lga.objects.lga)).features;
+
 
     features.append("g")
         .selectAll("path")
-        .data(topojson.feature(sa2s,sa2s.objects.sa2s).features)
+        .data(lgaData)
         .enter().append("path")
-            .attr("class", "sa2")
-            .attr("id", d => "sa2" + d.properties.SA2_MAIN16)
-            .attr("fill", "#dcdcdc")
-            // .attr("stroke", "#647882")
-            .attr("data-tooltip","")
+            .attr("class", "lga")
+            .attr("id", d => "lga" + d.properties.NSW_LGA__2)
+            .style("fill-opacity", function(d) {
+
+                return 0.3
+
+                /*
+                if (d['properties']['new_NEW'] == "TRUE") {
+                    return 0.5
+                } 
+
+                else if (d['properties']['new_NEW'] == "REJECT") {
+                    return 0.4
+                } 
+                else {
+                    return 0
+                }
+                */
+
+            })
+            .style("stroke", "white")
+            .style("fill", function(d) {
+
+                if (d['properties']['new_NEW'] == "TRUE") {
+                    return "url(#hash4_4)"
+                } 
+
+                else if (d['properties']['new_NEW'] == "REJECT") {
+                    return "url(#circle_pattern)"
+                } 
+                else {
+                    return "white"
+                }
+
+            })
+            .attr("data-tooltip",function(d) { 
+
+                return d['properties']['NSW_LGA__2']
+
+            })
             .attr("d", path)
             .on("mouseover", tooltipIn)
-            .on("mouseout", tooltipOut) 
+            .on("mouseout", tooltipOut)
 
     if (width > 480) {
         features.append("path")
           .attr("class", "mesh")
           .attr("stroke-width", 0.5)
-          .attr("d", path(topojson.mesh(sa2s, sa2s.objects.sa2s, function(a, b) { return a !== b; }))); 
+          .attr("d", path(topojson.mesh(lga, lga.objects.lga, function(a, b) { return a !== b; }))); 
     }
+    
           
 
     var scalePurple = d3.scaleLinear()
         .range(['rgb(242,240,247)','rgb(84,39,143)'])       
 
-    // var keyColors = ['#4575b4','#74add1','#abd9e9','#e0f3f8','#ffffbf','#fee090','#fdae61','#f46d43','#d73027']  
-    var keyColors =['#4575b4','#6691c3','#86add2','#a7c9e1','#cde5f0','#ffeaab','#ffbe84','#f89261','#ea6642','#d73027']
+    var keyColors = ['#4575b4','#74add1','#abd9e9','#e0f3f8','#ffffbf','#fee090','#fdae61','#f46d43','#d73027']  
 
-    // ['#313695','#4575b4','#74add1','#abd9e9','#abd9e9','#e0f3f8','#fee090','#fdae61','#f46d43','#d73027','#a50026']
     var thresholds = [-1000,-100,-10,-1,0,1,10,100,1000]
     
     var color = d3.scaleThreshold()
@@ -156,11 +252,52 @@ window.init = function init(el, config) {
         .range(keyColors)
 
 
-    var keyWidth = 290;
+    var keyWidth = 500;    
 
-    if (keyWidth > width - 10) {
-        keyWidth = width - 10
-    }
+    d3.select("#mergeContainer svg").remove();
+
+    var mergeSvg = d3.select("#mergeContainer")
+                    .append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "40px")
+                    .attr("id", "mergeSvg")
+
+    var councilStuff = ["New council", "Council merger rejected"];
+
+    councilStuff.forEach(function(d,i) {
+
+        console.log(d)
+
+        mergeSvg.append("rect")
+            .attr("x", (i * 120))
+            .attr("y", 0)
+            .attr("width", 20)
+            .attr("height", 20)
+            .style("stroke-width", "1px")
+            .style("stroke", "black")
+            .style("fill", function() { 
+
+                if (d == 'New council') {
+                    return "url(#hash4_4)"
+                }
+
+                else if (d == 'Council merger rejected') {
+                    return "url(#circle_pattern)"
+
+                }              
+
+            });
+
+        mergeSvg.append("text")
+            .attr("x", i * 120 + 25)
+            .attr("y", 15) //((i * 50) * scaleFactor) + 23 * scaleFactor
+            .style("font-size", "11px")
+            .classed("labels",true)
+            .text(d)
+
+
+    });
+
 
     d3.select("#keyContainer svg").remove();
 
@@ -169,90 +306,54 @@ window.init = function init(el, config) {
                     .attr("width", keyWidth)
                     .attr("height", "40px")
                     .attr("id", "keySvg")
-            
-    var keySquare = keyWidth/10;                
 
-    keyColors.forEach(function(d,i) {
+    var partyStuff = ["Liberal","National","Labor","Greens","Independent"];
+    
+
+    partyStuff.forEach(function(d,i) {
+
         keySvg.append("rect")
-            .attr("x",keySquare*i)
-            .attr("y",0)
-            .attr("width", keySquare)
-            .attr("height",15)
-            .attr("fill",d)
-            .attr("stroke", "#dcdcdc")
-    })
+            .attr("x", (i * 70))
+            .attr("y", 0)
+            .attr("width", 20)
+            .attr("height", 20)
+            .style("stroke-width", "1px")
+            .style("opacity", 0.7)
+            .style("fill", function() { 
 
-    thresholds.forEach( function(d,i) {
+                if (d == 'Labor') {
+                    return partyColour[2];
+                }
+
+                else if (d == 'Liberal') {
+                    return partyColour[0];
+
+                }
+
+                else if (d == 'National') {
+                    return partyColour[1];
+
+                }
+
+                else if (d == 'Greens') {
+                    return partyColour[3];
+                }
+
+                else if (d == 'Independent') {
+                    return partyColour[4];
+                }               
+
+            });
+
         keySvg.append("text")
-            .attr("x",(i +1)*keySquare)
-            .attr("text-anchor","middle")
-            .attr("y",30)
-            .attr("class","keyLabel")
+            .attr("x", i * 70 + 22)
+            .attr("y", 15) //((i * 50) * scaleFactor) + 23 * scaleFactor
+            .style("font-size", "11px")
+            .classed("labels",true)
             .text(d)
-    })
-
-    // var leftLabel = keySvg.append("text")
-    //         .attr("x",0)
-    //         .attr("y",30)
-    //         .attr("text-anchor","start")
-    //         .attr("id", "leftKeyLabel")
-    //         .attr("class","keyLabel")
-    //         .text("0")
-
-    // var rightLabel = keySvg.append("text")
-    //         .attr("x",keyWidth)
-    //         .attr("y",30)
-    //         .attr("text-anchor","end")
-    //         .attr("id", "rightKeyLabel")
-    //         .attr("class","keyLabel")
-    //         .text("100")    
-
-    function updateMap(id) {
-        // console.log(`${config.assetPath}/assets/data/${id}.json`)
-        statusMessage.style("opacity",1);
-        d3.json(`${config.assetPath}/assets/data/${id}.json`, function(error,newData) {
-            
-            if (error) {
-                console.log(error)
-            }; 
-
-            statusMessage.transition(600).style("opacity",0);
-
-            var dataArray = d3.entries(newData).map(function(d) { return(d.value)})
-            // color.domain(d3.extent(dataArray))
-            // console.log(color.quantiles())
-            // console.log(d3.extent(dataArray))
-
-            // leftLabel.text(numberFormat(d3.extent(dataArray)[0]))
-            // rightLabel.text(numberFormat(d3.extent(dataArray)[1]))
-
-            d3.selectAll(".sa2")
-                .transition("changeFill")
-                    .attr("fill", function(d) {
-                        if (typeof(newData[d.properties.SA2_MAIN16]) != 'undefined' && newData[d.properties.SA2_MAIN16] != null) {
-                            return color(newData[d.properties.SA2_MAIN16])  
-                        }
-                        else {
-                            return "#dcdcdc"
-                        }
-                    })
-
-           d3.selectAll(".sa2")         
-                    .attr("data-tooltip", function(d) {
-                        if (typeof(newData[d.properties.SA2_MAIN16]) != 'undefined' && newData[d.properties.SA2_MAIN16] != null) {
-                            return `${numberFormat(newData[d.properties.SA2_MAIN16])}`
-                        }
-
-                        else {
-                            return "Unavailable"    
-                        }
-                        
-                    })
 
 
-        })
-        
-    }       
+    });
 
     function tooltipMove(d) {
         var leftOffset = 0
@@ -273,7 +374,7 @@ window.init = function init(el, config) {
 
     function tooltipIn(d) {     
         var tooltipText = d3.select(this).attr('data-tooltip')
-        d3.select(".tooltip").html(`<b>${d.properties.SA2_NAME16}</b><br>Percent change: <b>${tooltipText}</b>`).style("visibility", "visible");
+        d3.select(".tooltip").html(`<b>${tooltipText}`).style("visibility", "visible");
         
     }
 
@@ -323,7 +424,6 @@ window.init = function init(el, config) {
        
     }
 
-
     if (width < 500) {
         if (zoomOn == null) {
             toggleZoom()
@@ -350,7 +450,14 @@ window.init = function init(el, config) {
         features.selectAll(".placeText")
                 .style("font-size", 0.8/d3.event.transform.k + "rem")
                 .attr("dx", 5/d3.event.transform.k )
-                .attr("dy", 5/d3.event.transform.k );               
+                .attr("dy", 5/d3.event.transform.k );
+
+
+        d3.selectAll(".ding")
+                .attr("width", (5 / scaleFactor)*2)
+                .attr("height", (5 / scaleFactor)*2)
+
+
 
     }
 
@@ -362,135 +469,18 @@ window.init = function init(el, config) {
             .call( zoom.transform, d3.zoomIdentity );
     }
 
-    d3.select("#statChooser").on("change", function() {
-        currentSelection = d3.select(this).property('value');
-        updateMap(d3.select(this).property('value'));
-    })
 
-
-
-    updateMap(currentSelection);
 
     }
 
 
-    [].slice.apply(el.querySelectorAll('.interactive-share')).forEach(shareEl => {
-        var network = shareEl.getAttribute('data-network');
-        shareEl.addEventListener('click',() => shareFn(network));
-    });
-
-   var statLookup = {
-  "average_household_size": "Average household size",
-  "born_overseas": "Persons born overseas",
-  "percent_born_overseas": "% born overseas",
-  "defacto_females": "Females in a defacto relationship",
-  "defacto_males": "Males in a defacto relationship",
-  "dwelling_owned_mortgage": "Dwellings owned with a mortgage",
-  "dwelling_owned_mortgage_percent": "% dwellings owned with a mortgage",
-  "dwelling_owned_outright": "Dwellings owned outright",
-  "dwelling_owned_outright_percent": "% dwellings owned outright",
-  "dwelling_rented": "Rented",
-  "dwelling_rented_percent": "% dwellings rented",
-  "female": "Females",
-  "flat_or_unit": "Flat or unit",
-  "flat_or_unit_percent": "% flat or unit",
-  "indig_persons": "Indigenous persons",
-  "language_other": "Language at home besides English",
-  "percent_language_other": "% language at home besides English",
-  "male": "Males",
-  "married_females": "Married females",
-  "married_males": "Married males",
-  "median_age": "Median age",
-  "median_household_income": "Median household income",
-  "median_mortgage": "Median mortgage",
-  "median_rent": "Median rent",
-  "non_indig_persons": "Non-Indigenous persons",
-  "notmarried_females": "Unmarried females",
-  "notmarried_males": "Unmarried males",
-  "percent_defacto_females": "% females in a defacto relationship",
-  "percent_defacto_males": "% males in a defacto relationship",
-  "percent_female": "% female",
-  "percent_indig_persons": "% Indigenous",
-  "percent_male": "% male",
-  "percent_married_females": "% married females",
-  "percent_married_males": "% married males",
-  "percent_notmarried_females": "% unmarried females",
-  "percent_notmarried_males": "% unmarried males",
-  "persons": "Persons",
-  "persons_per_bedroom": "Average number of persons per bedroom",
-  "semi_or_townhouse": "Semi-detached or townhouse",
-  "semi_or_townhouse_percent": "% semi-detached or townhouse",
-  "seperate_house": "Freestanding house",
-  "religious_persons_percent":"% religious",
-  "non_religious_persons_percent":"% non-religious",
-  "non_religious_persons":"Non-religions persons",
-  "religious_persons":"Religious persons"
-}
-
-var stats = [{"stat_key":"average_household_size","short_description":"Average household size"},
-    {"stat_key":"born_overseas","short_description":"Persons born overseas"},
-    {"stat_key":"percent_born_overseas","short_description":"% born overseas"},
-    {"stat_key":"defacto_females","short_description":"Females in a defacto relationship"},
-    {"stat_key":"defacto_males","short_description":"Males in a defacto relationship"},
-    {"stat_key":"dwelling_owned_mortgage","short_description":"Dwellings owned with a mortgage"},
-    {"stat_key":"dwelling_owned_mortgage_percent","short_description":"% dwellings owned with a mortgage"},
-    {"stat_key":"dwelling_owned_outright","short_description":"Dwellings owned outright"},
-    {"stat_key":"dwelling_owned_outright_percent","short_description":"% dwellings owned outright"},
-    {"stat_key":"dwelling_rented","short_description":"Rented"},
-    {"stat_key":"dwelling_rented_percent","short_description":"% dwellings rented"},
-    {"stat_key":"female","short_description":"Females"},
-    {"stat_key":"flat_or_unit","short_description":"Flat or unit"},
-    {"stat_key":"flat_or_unit_percent","short_description":"% flat or unit"},
-    {"stat_key":"indig_persons","short_description":"Indigenous persons"},
-    {"stat_key":"language_other","short_description":"Language at home besides English"},
-    {"stat_key":"percent_language_other","short_description":"% language at home besides English"},
-    {"stat_key":"male","short_description":"Males"},
-    {"stat_key":"married_females","short_description":"Married females"},
-    {"stat_key":"married_males","short_description":"Married males"},
-    {"stat_key":"median_age","short_description":"Median age"},
-    {"stat_key":"median_household_income","short_description":"Median weekly household income ($)"},
-    {"stat_key":"median_mortgage","short_description":"Median monthly mortgage payment ($)"},
-    {"stat_key":"median_rent","short_description":"Median weekly rent ($)"},
-    {"stat_key":"non_indig_persons","short_description":"Non-Indigenous persons"},
-    {"stat_key":"notmarried_females","short_description":"Unmarried females"},
-    {"stat_key":"notmarried_males","short_description":"Unmarried males"},
-    {"stat_key":"percent_defacto_females","short_description":"% females in a defacto relationship"},
-    {"stat_key":"percent_defacto_males","short_description":"% males in a defacto relationship"},
-    {"stat_key":"percent_female","short_description":"% female"},
-    {"stat_key":"percent_indig_persons","short_description":"% Indigenous"},
-    {"stat_key":"percent_male","short_description":"% male"},
-    {"stat_key":"percent_married_females","short_description":"% married females"},
-    {"stat_key":"percent_married_males","short_description":"% married males"},
-    {"stat_key":"percent_notmarried_females","short_description":"% unmarried females"},
-    {"stat_key":"percent_notmarried_males","short_description":"% unmarried males"},
-    {"stat_key":"persons","short_description":"Persons"},
-    {"stat_key":"religious_persons_percent","short_description":"% religious"},
-    {"stat_key":"non_religious_persons_percent","short_description":"% non-religious"},
-    {"stat_key":"non_religious_persons","short_description":"Non-religions persons"},
-    {"stat_key":"religious_persons","short_description":"Religious persons"},
-    {"stat_key":"persons_per_bedroom","short_description":"Average number of persons per bedroom"},
-    {"stat_key":"semi_or_townhouse","short_description":"Semi-detached or townhouse"},
-    {"stat_key":"semi_or_townhouse_percent","short_description":"% semi-detached or townhouse"},
-    {"stat_key":"seperate_house","short_description":"Freestanding house"}]
-
-
-    stats.forEach(function(d) {
-        d3.select("#statChooser")
-            .append("option")
-            .attr("value", d.stat_key)
-            .text(d.short_description)
-    })
-
-
     var q = d3.queue()
-        .defer(d3.json, `${config.assetPath}/assets/data/sa22.json`)
-        .defer(d3.json, `${config.assetPath}/assets/data/places.json`)
+        .defer(d3.json, `${config.assetPath}/assets/gis/lga.json`)
+        .defer(d3.json, `${config.assetPath}/assets/gis/electorate-merge.json`)
         .awaitAll(function(error, results) {
-
-            var selection = getParameter("stat");
-
             if (error) throw error;
-            makeMap(results[0],results[1],selection)
+            console.log(results)
+            makeMap(results[0],results[1])
             var to=null
              var lastWidth = document.querySelector(".interactive-container").getBoundingClientRect()
              window.addEventListener('resize', () => {

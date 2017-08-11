@@ -29,11 +29,30 @@
 		fill: none;
   		stroke: #fff;
 	}
+
+	#mapContainer {
+		border-top: 1px solid #c2c6cc;
+		border-bottom: 1px solid #c2c6cc;
+	}
 	
 	.notes {
 		font-family: 'Guardian Text Sans Web',Arial;
 		font-size:0.9rem;
 		color:#767676;
+	}
+
+	.labels {
+		font-family: 'Guardian Text Sans Web',Arial;
+		font-size:0.9rem;
+		color:#767676;
+	}
+
+	.chartTitle {
+		font-size:1.25rem;
+		line-height:1.375rem;
+		padding-bottom:.45rem;
+		font-weight:600;
+		color:#000;
 	}
 
 	.keyText {

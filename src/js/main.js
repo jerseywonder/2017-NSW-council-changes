@@ -19,7 +19,6 @@ export function init(el, context, config, mediator) {
     // if (isAndroidApp) {
     //     d3.select("#variableNote").text("Census data")
     // }
-    var currentSelection = "average_household_size";
 
     function numberFormat(num) {
         if ( num > 0 ) {
@@ -190,7 +189,24 @@ export function init(el, context, config, mediator) {
         .enter().append("path")
             .attr("class", "lga")
             .attr("id", d => "lga" + d.properties.NSW_LGA__2)
-            .style("fill-opacity", 0.2)
+            .style("fill-opacity", function(d) {
+
+                return 0.3
+
+                /*
+                if (d['properties']['new_NEW'] == "TRUE") {
+                    return 0.5
+                } 
+
+                else if (d['properties']['new_NEW'] == "REJECT") {
+                    return 0.4
+                } 
+                else {
+                    return 0
+                }
+                */
+
+            })
             .style("stroke", "white")
             .style("fill", function(d) {
 
@@ -297,11 +313,12 @@ export function init(el, context, config, mediator) {
     partyStuff.forEach(function(d,i) {
 
         keySvg.append("rect")
-            .attr("x", (i * 90))
+            .attr("x", (i * 70))
             .attr("y", 0)
             .attr("width", 20)
             .attr("height", 20)
             .style("stroke-width", "1px")
+            .style("opacity", 0.7)
             .style("fill", function() { 
 
                 if (d == 'Labor') {
@@ -329,7 +346,7 @@ export function init(el, context, config, mediator) {
             });
 
         keySvg.append("text")
-            .attr("x", i * 90 + 25)
+            .attr("x", i * 70 + 22)
             .attr("y", 15) //((i * 50) * scaleFactor) + 23 * scaleFactor
             .style("font-size", "11px")
             .classed("labels",true)
