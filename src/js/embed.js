@@ -6,19 +6,12 @@ import * as topojson from "topojson"
 
 window.init = function init(el, config) {
     
-    console.log("yep")
     iframeMessenger.enableAutoResize();
 
     el.innerHTML = embedHTML;
 
     var zoomOn = null;
     var scaleFactor = 5;
-
-    console.log("scaleFactor: " + scaleFactor)
-
-    // if (isAndroidApp) {
-    //     d3.select("#variableNote").text("Census data")
-    // }
 
     function numberFormat(num) {
         if ( num > 0 ) {
@@ -266,8 +259,6 @@ window.init = function init(el, config) {
 
     councilStuff.forEach(function(d,i) {
 
-        console.log(d)
-
         mergeSvg.append("rect")
             .attr("x", (i * 120))
             .attr("y", 0)
@@ -398,7 +389,6 @@ window.init = function init(el, config) {
     function toggleZoom() {
 
         
-        console.log(zoomOn)
         if (zoomOn == false) {
             d3.select("#zoomToggle").classed("zoomLocked", false)
             d3.select("#zoomToggle").classed("zoomUnlocked", true) 
@@ -479,7 +469,6 @@ window.init = function init(el, config) {
         .defer(d3.json, `${config.assetPath}/assets/gis/electorate-merge.json`)
         .awaitAll(function(error, results) {
             if (error) throw error;
-            console.log(results)
             makeMap(results[0],results[1])
             var to=null
              var lastWidth = document.querySelector(".interactive-container").getBoundingClientRect()

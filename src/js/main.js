@@ -14,11 +14,6 @@ export function init(el, context, config, mediator) {
     var zoomOn = null;
     var scaleFactor = 5;
 
-    console.log("scaleFactor: " + scaleFactor)
-
-    // if (isAndroidApp) {
-    //     d3.select("#variableNote").text("Census data")
-    // }
 
     function numberFormat(num) {
         if ( num > 0 ) {
@@ -39,8 +34,6 @@ export function init(el, context, config, mediator) {
 
     function makeMap(lga,elected) {
 
-    // console.log(sa2s,places) 
-
     var statusMessage = d3.select("#statusMessage");
 
     var width = document.querySelector("#mapContainer").getBoundingClientRect().width
@@ -60,8 +53,6 @@ export function init(el, context, config, mediator) {
         .projection(projection);
 
     var graticule = d3.geoGraticule();  
-
-    // console.log(sa2s.objects.sa2s)
 
     var zoom = d3.zoom()
             .scaleExtent([1, 100])
@@ -266,8 +257,6 @@ export function init(el, context, config, mediator) {
 
     councilStuff.forEach(function(d,i) {
 
-        console.log(d)
-
         mergeSvg.append("rect")
             .attr("x", (i * 120))
             .attr("y", 0)
@@ -397,8 +386,6 @@ export function init(el, context, config, mediator) {
 
     function toggleZoom() {
 
-        
-        console.log(zoomOn)
         if (zoomOn == false) {
             d3.select("#zoomToggle").classed("zoomLocked", false)
             d3.select("#zoomToggle").classed("zoomUnlocked", true) 
@@ -479,7 +466,7 @@ export function init(el, context, config, mediator) {
         .defer(d3.json, `${config.assetPath}/assets/gis/electorate-merge.json`)
         .awaitAll(function(error, results) {
             if (error) throw error;
-            console.log(results)
+
             makeMap(results[0],results[1])
             var to=null
              var lastWidth = document.querySelector(".interactive-container").getBoundingClientRect()
